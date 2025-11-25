@@ -17,19 +17,19 @@
 ; CHECK-NEXT: C_FSWSP
 ; CHECK-NEXT: 	Categories: c zcf zce f 
 ; CHECK-NEXT: C_LD
-; CHECK-NEXT: 	Categories: c zca 
+; CHECK-NEXT: 	Categories: zca
 ; CHECK-NEXT: C_LDSP
-; CHECK-NEXT: 	Categories: c zca 
+; CHECK-NEXT: 	Categories: zca
 ; CHECK-NEXT: C_LW
-; CHECK-NEXT: 	Categories: c zca 
+; CHECK-NEXT: 	Categories: zca
 ; CHECK-NEXT: C_LWSP
-; CHECK-NEXT: 	Categories: c zca 
+; CHECK-NEXT: 	Categories: zca
 ; CHECK-NEXT: C_SD
-; CHECK-NEXT: 	Categories: c zca 
+; CHECK-NEXT: 	Categories: zca
 ; CHECK-NEXT: C_SDSP
-; CHECK-NEXT: 	Categories: c zca 
+; CHECK-NEXT: 	Categories: zca
 ; CHECK-NEXT: C_SW
-; CHECK-NEXT: 	Categories: c zca 
+; CHECK-NEXT: 	Categories: zca
 ; CHECK-NEXT: C_SWSP
-; CHECK-NEXT: 	Categories: c zca 
+; CHECK-NEXT: 	Categories: zca
 ; CHECK-EMPTY:
