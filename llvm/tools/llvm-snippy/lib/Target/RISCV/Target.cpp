@@ -3948,25 +3948,33 @@ private:
   getMostSuperFPRegWithClassID(const InstructionGenerationContext &InstrGenCtx,
                                const MCRegisterInfo &RI, MCRegister Reg) const {
     assert(isFloatingPoint(Reg));
-    static constexpr std::array<unsigned, 3> FPRClassesID{
-        RISCV::FPR16RegClassID, RISCV::FPR32RegClassID, RISCV::FPR64RegClassID};
+    static constexpr std::array<unsigned, 4> FPRClassesID{
+        RISCV::FPR16RegClassID,
+        RISCV::FPR32RegClassID,
+        RISCV::FPR64RegClassID,
+        RISCV::FPR128RegClassID,
+    };
 
     auto &ST = InstrGenCtx.getSubtarget<RISCVSubtarget>();
-    SmallVector<MCRegister, 2> SupRegs(RI.superregs(Reg));
+    SmallVector<MCRegister, 4> SupRegs(RI.superregs(Reg));
     // When any of the zfh, zfhmin, or f extensions are enabled, we can only
     // unNaN FPR32 registers. UnNaN operations on FPR64 registers require
     // instructions from the d extension, which is not present in these
     // configurations. Also handle the case when we have 32-bit GPR registers
     // and can only overwrite single precision FP registers.
     llvm::erase_if(SupRegs, [&](auto SupReg) {
-      return RI.getRegClass(RISCV::FPR64RegClassID).contains(SupReg) &&
-             (!ST.hasStdExtD() || ST.getXLen() == 32);
+      if (RI.getRegClass(RISCV::FPR64RegClassID).contains(SupReg) &&
+          (!ST.hasStdExtD() || ST.getXLen() == 32))
+        return true;
+      if (RI.getRegClass(RISCV::FPR128RegClassID).contains(SupReg))
+        return true;
+      return false;
     });
     if (SupRegs.empty())
       return std::nullopt;
     // When the +d extension is enabled, the FPR64 register must be obtained. It
     // is a superregister of FPR32
-    if (SupRegs.size() == 2)
+    if (ST.hasStdExtD())
       llvm::erase_if(SupRegs, [&](auto &&SupReg) {
         return !RI.getRegClass(RISCV::FPR64RegClassID).contains(SupReg);
       });
