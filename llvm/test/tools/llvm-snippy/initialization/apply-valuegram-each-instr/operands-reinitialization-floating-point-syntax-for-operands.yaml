@@ -41,5 +41,5 @@ operands-reinitialization:
 #                            $f5_f = FADD_S $f21_f, $f31_f, 0
 
 
-# CHECK: [[XREG1:\$x[0-9]+]] = ADDI{{.*}}, -193{{.*[[:space:]].*}}[[XREG1]] = SLLI [[XREG1]], 24{{.*[[:space:]].*}}[[FREG1:\$f[0-9]+_f]] = FMV_W_X [[XREG1]]{{.*[[:space:]].*}}[[XREG2:\$x[0-9]+]] = LUI 1048571{{.*[[:space:]].*}}[[XREG2]] = ADDIW [[XREG2]], -410{{.*[[:space:]].*}}[[FREG2:\$f[0-9]+_f]] = FMV_W_X [[XREG2]]{{.*[[:space:]].*}}[[FREG3:\$f[0-9]+_f]] = FADD_S [[FREG1]], [[FREG2]]{{.*}}
+# CHECK: [[XREG1:\$x[0-9]+]] = ADDI{{.*}}, -193{{.*[[:space:]].*}}[[XREG1]] = SLLI [[XREG1]], 24{{.*[[:space:]].*}}[[FREG1:\$f[0-9]+_f]] = FMV_W_X [[XREG1]]{{.*[[:space:]].*}}[[XREG2:\$x[0-9]+]] = LUI 1048571{{.*[[:space:]].*}}[[XREG2]] = ADDI [[XREG2]], -410{{.*[[:space:]].*}}[[FREG2:\$f[0-9]+_f]] = FMV_W_X [[XREG2]]{{.*[[:space:]].*}}[[FREG3:\$f[0-9]+_f]] = FADD_S [[FREG1]], [[FREG2]]{{.*}}
 # CHECK: [[XREG3:\$x[0-9]+]] = ADDI{{.*}}, -1{{.*[[:space:]].*}}[[XREG3]] = SLLI [[XREG3]], 52{{.*[[:space:]].*}}[[FREG4:\$f[0-9]+_f]] = FMV_W_X [[XREG3]]{{.*[[:space:]].*}}[[XREG2:\$x[0-9]+]] = LUI 4095{{.*[[:space:]].*}}[[XREG2]] = SLLI [[XREG2]], 39{{.*[[:space:]].*}}[[FREG5:\$f[0-9]+_f]] = FMV_W_X [[XREG2]]{{.*[[:space:]].*}}[[FREG6:\$f[0-9]+_f]] = FADD_S [[FREG4]], [[FREG5]]{{.*}}
