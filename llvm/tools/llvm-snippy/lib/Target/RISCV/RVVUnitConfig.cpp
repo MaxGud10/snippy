@@ -841,6 +841,14 @@ template <> struct yaml::MappingTraits<VectorUnitRules> {
 namespace snippy {
 
 std::unique_ptr<RVVConfigInterface> createRVVConfig() {
+#if 0
+  initRISCVTargetParserOptions();
+  if (AllowReservedSEW == cl::BOU_UNSET)
+    // Snippy allows using reserved SEW (128 - 1024) encodings and RISC-V LLVM
+    // backend should be able to encode it.
+    AllowReservedSEW = cl::BOU_TRUE;
+#endif
+  AllowReservedSEW = true;
   return std::make_unique<RVVConfig>();
 }
 

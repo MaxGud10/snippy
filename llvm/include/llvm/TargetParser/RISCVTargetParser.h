@@ -15,11 +15,17 @@
 #define LLVM_TARGETPARSER_RISCVTARGETPARSER_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
+
+extern bool AllowReservedSEW;
+#if 0
+void initRISCVTargetParserOptions();
+#endif
 
 class Triple;
 
@@ -89,10 +95,11 @@ enum {
 
 // Is this a SEW value that can be encoded into the VTYPE format.
 inline static bool isValidSEW(unsigned SEW) {
-  // We set the max SEW to 1024 for the sake of llvm-snippy (instead of 64 that
-  // is chosen in upstream LLVM and is in general allowed in allording to the
-  // SPEC).
-  return isPowerOf2_32(SEW) && SEW >= 8 && SEW <= 1024;
+#if 0
+  initRISCVTargetParserOptions();
+#endif
+  return isPowerOf2_32(SEW) && SEW >= 8 &&
+         (AllowReservedSEW == cl::BOU_TRUE ? (SEW <= 1024) : (SEW <= 64));
 }
 
 // Is this a LMUL value that can be encoded into the VTYPE format.

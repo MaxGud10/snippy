@@ -15,8 +15,27 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/TargetParser/RISCVISAInfo.h"
+#include "llvm/Support/ManagedStatic.h"
 
 namespace llvm {
+
+bool AllowReservedSEW = false;
+
+#if 0
+namespace {
+struct CreateAllowReservedSEW {
+  static void *call() {
+    return new cl::boolOrDefault(cl::BOU_UNSET);
+  }
+};
+}
+
+void initRISCVTargetParserOptions() {
+  static ManagedStatic<cl::boolOrDefault, CreateAllowReservedSEW> AllowReservedSEWMS;
+  *AllowReservedSEWMS;
+}
+#endif
+
 namespace RISCV {
 
 enum CPUKind : unsigned {
