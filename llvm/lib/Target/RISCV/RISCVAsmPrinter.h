@@ -19,12 +19,16 @@
 using namespace llvm;
 
 class RISCVAsmPrinter : public AsmPrinter {
+public:
+  static char ID;
+
+private:
   const RISCVSubtarget *STI;
 
 public:
   explicit RISCVAsmPrinter(TargetMachine &TM,
                            std::unique_ptr<MCStreamer> Streamer)
-      : AsmPrinter(TM, std::move(Streamer)) {}
+      : AsmPrinter(TM, std::move(Streamer), ID) {}
 
   StringRef getPassName() const override { return "RISC-V Assembly Printer"; }
 
@@ -71,6 +75,8 @@ public:
 
   void emitFunctionEntryLabel() override;
   bool emitDirectiveOptionArch();
+
+  void emitNoteGnuProperty(const Module &M);
 
   bool lowerToMCInst(const MachineInstr *MI, MCInst &OutMI);
 
