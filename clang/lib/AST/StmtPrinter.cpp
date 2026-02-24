@@ -1291,14 +1291,8 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
          << PD->getFunctionScopeIndex();
       break;
     }
-    case Decl::Decomposition:
-      OS << "decomposition";
-      for (const auto &I : cast<DecompositionDecl>(VD)->bindings())
-        OS << '-' << I->getName();
-      break;
     default:
-      OS << "unhandled-anonymous-" << VD->getDeclKindName();
-      break;
+      llvm_unreachable("Unhandled anonymous declaration kind");
     }
   }
   if (Node->hasExplicitTemplateArgs()) {

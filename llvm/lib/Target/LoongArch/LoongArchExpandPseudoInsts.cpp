@@ -638,8 +638,7 @@ void LoongArchPreRAExpandPseudo::annotateTableJump(
         if (MO.isJTI()) {
           MBBI->setPreInstrSymbol(
               *MF, MF->getContext().createNamedTempSymbol("jrtb_"));
-          MF->getInfo<LoongArchMachineFunctionInfo>()->setJumpInfo(
-              &*MBBI, MO.getIndex());
+          MF->getInfo<LoongArchMachineFunctionInfo>()->setJumpInfo(&*MBBI, &MO);
           IsFound = true;
           return;
         }

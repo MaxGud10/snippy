@@ -12529,19 +12529,26 @@ multiclass STOPregister<string asm, string instr> {
                     !cast<Instruction>(instr # "X")>;
 }
 
-let Predicates = [HasLSUI] in
 class BaseSTOPregisterLSUI<string asm, RegisterClass OP, Register Reg,
                         Instruction inst> :
-      InstAlias<asm # "\t$Rs, [$Rn]", (inst Reg, OP:$Rs, GPR64sp:$Rn), 0>;
+      InstAlias<asm # "\t$Rs, [$Rn]", (inst Reg, OP:$Rs, GPR64sp:$Rn)>;
 
 multiclass STOPregisterLSUI<string asm, string instr> {
-  def : BaseSTOPregisterLSUI<asm # "l", GPR32, WZR,
-                    !cast<Instruction>(instr # "LW")>;
-  def : BaseSTOPregisterLSUI<asm # "l", GPR64, XZR,
-                    !cast<Instruction>(instr # "LX")>;
-  def : BaseSTOPregisterLSUI<asm, GPR32, WZR,
+  def : BaseSTOPregisterLSUI<asm # "a",        GPR32, WZR,
                     !cast<Instruction>(instr # "W")>;
-  def : BaseSTOPregisterLSUI<asm, GPR64, XZR,
+  def : BaseSTOPregisterLSUI<asm # "a",        GPR64, XZR,
+                    !cast<Instruction>(instr # "X")>;
+  def : BaseSTOPregisterLSUI<asm # "l",        GPR32, WZR,
+                    !cast<Instruction>(instr # "W")>;
+  def : BaseSTOPregisterLSUI<asm # "l",        GPR64, XZR,
+                    !cast<Instruction>(instr # "X")>;
+  def : BaseSTOPregisterLSUI<asm # "al",        GPR32, WZR,
+                    !cast<Instruction>(instr # "W")>;
+  def : BaseSTOPregisterLSUI<asm # "al",        GPR64, XZR,
+                    !cast<Instruction>(instr # "X")>;
+  def : BaseSTOPregisterLSUI<asm,        GPR32, WZR,
+                    !cast<Instruction>(instr # "W")>;
+  def : BaseSTOPregisterLSUI<asm,        GPR64, XZR,
                     !cast<Instruction>(instr # "X")>;
 }
 

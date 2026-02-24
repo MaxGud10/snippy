@@ -1023,8 +1023,7 @@ public:
 
   /// Returns target-specific min and max values VScale_Range.
   virtual std::optional<std::pair<unsigned, unsigned>>
-  getVScaleRange(const LangOptions &LangOpts,
-                 bool IsArmStreamingFunction) const {
+  getVScaleRange(const LangOptions &LangOpts) const {
     return std::nullopt;
   }
   /// The __builtin_clz* and __builtin_ctz* built-in
@@ -1469,7 +1468,6 @@ public:
   /// specification
   virtual bool validateBranchProtection(StringRef Spec, StringRef Arch,
                                         BranchProtectionInfo &BPI,
-                                        const LangOptions &LO,
                                         StringRef &Err) const {
     Err = "";
     return false;

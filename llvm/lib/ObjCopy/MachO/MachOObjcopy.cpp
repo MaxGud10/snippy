@@ -306,25 +306,25 @@ static Error processLoadCommands(const MachOConfig &MachOConfig, Object &Obj) {
 }
 
 static Error dumpSectionToFile(StringRef SecName, StringRef Filename,
-                               StringRef InputFilename, Object &Obj) {
+                               Object &Obj) {
   for (LoadCommand &LC : Obj.LoadCommands)
     for (const std::unique_ptr<Section> &Sec : LC.Sections) {
       if (Sec->CanonicalName == SecName) {
         Expected<std::unique_ptr<FileOutputBuffer>> BufferOrErr =
             FileOutputBuffer::create(Filename, Sec->Content.size());
         if (!BufferOrErr)
-          return createFileError(Filename, BufferOrErr.takeError());
+          return BufferOrErr.takeError();
         std::unique_ptr<FileOutputBuffer> Buf = std::move(*BufferOrErr);
         llvm::copy(Sec->Content, Buf->getBufferStart());
 
         if (Error E = Buf->commit())
-          return createFileError(Filename, std::move(E));
+          return E;
         return Error::success();
       }
     }
 
-  return createFileError(InputFilename, object_error::parse_failed,
-                         "section '%s' not found", SecName.str().c_str());
+  return createStringError(object_error::parse_failed, "section '%s' not found",
+                           SecName.str().c_str());
 }
 
 static Error addSection(const NewSectionInfo &NewSection, Object &Obj) {
@@ -426,13 +426,12 @@ static Error handleArgs(const CommonConfig &Config,
     StringRef SectionName;
     StringRef FileName;
     std::tie(SectionName, FileName) = Flag.split('=');
-    if (Error E =
-            dumpSectionToFile(SectionName, FileName, Config.InputFilename, Obj))
+    if (Error E = dumpSectionToFile(SectionName, FileName, Obj))
       return E;
   }
 
   if (Error E = removeSections(Config, Obj))
-    return createFileError(Config.InputFilename, std::move(E));
+    return E;
 
   // Mark symbols to determine which symbols are still needed.
   if (Config.StripAll)
@@ -447,20 +446,20 @@ static Error handleArgs(const CommonConfig &Config,
 
   for (const NewSectionInfo &NewSection : Config.AddSection) {
     if (Error E = isValidMachOCannonicalName(NewSection.SectionName))
-      return createFileError(Config.InputFilename, std::move(E));
+      return E;
     if (Error E = addSection(NewSection, Obj))
-      return createFileError(Config.InputFilename, std::move(E));
+      return E;
   }
 
   for (const NewSectionInfo &NewSection : Config.UpdateSection) {
     if (Error E = isValidMachOCannonicalName(NewSection.SectionName))
-      return createFileError(Config.InputFilename, std::move(E));
+      return E;
     if (Error E = updateSection(NewSection, Obj))
-      return createFileError(Config.InputFilename, std::move(E));
+      return E;
   }
 
   if (Error E = processLoadCommands(MachOConfig, Obj))
-    return createFileError(Config.InputFilename, std::move(E));
+    return E;
 
   return Error::success();
 }
@@ -480,7 +479,7 @@ Error objcopy::macho::executeObjcopyOnBinary(const CommonConfig &Config,
                              Config.InputFilename.str().c_str());
 
   if (Error E = handleArgs(Config, MachOConfig, **O))
-    return E;
+    return createFileError(Config.InputFilename, std::move(E));
 
   // Page size used for alignment of segment sizes in Mach-O executables and
   // dynamic libraries.

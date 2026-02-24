@@ -27,24 +27,13 @@
 // struct iovec definition
 #include <sys/uio.h>
 
-// LoongArch SIMD eXtension registers
 #ifndef NT_LOONGARCH_LSX
-#define NT_LOONGARCH_LSX 0xa02
+#define NT_LOONGARCH_LSX 0xa02 /* LoongArch SIMD eXtension registers */
 #endif
 
-// LoongArch Advanced SIMD eXtension registers
 #ifndef NT_LOONGARCH_LASX
-#define NT_LOONGARCH_LASX 0xa03
-#endif
-
-// LoongArch hardware breakpoint registers
-#ifndef NT_LOONGARCH_HW_BREAK
-#define NT_LOONGARCH_HW_BREAK 0xa05
-#endif
-
-// LoongArch hardware watchpoint registers
-#ifndef NT_LOONGARCH_HW_WATCH
-#define NT_LOONGARCH_HW_WATCH 0xa06
+#define NT_LOONGARCH_LASX                                                      \
+  0xa03 /* LoongArch Advanced SIMD eXtension registers */
 #endif
 
 #define REG_CONTEXT_SIZE                                                       \

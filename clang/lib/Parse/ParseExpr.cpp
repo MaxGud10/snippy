@@ -3736,6 +3736,7 @@ bool Parser::ParseExpressionList(SmallVectorImpl<Expr *> &Exprs,
     if (Tok.is(tok::r_paren)) {
       if (HasTrailingComma)
         *HasTrailingComma = true;
+      break;
     }
   }
   if (SawError) {

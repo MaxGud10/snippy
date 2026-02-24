@@ -2281,9 +2281,7 @@ DSEState::getInitializesArgMemLoc(const Instruction *I) {
   for (unsigned Idx = 0, Count = CB->arg_size(); Idx < Count; ++Idx) {
     ConstantRangeList Inits;
     Attribute InitializesAttr = CB->getParamAttr(Idx, Attribute::Initializes);
-    // initializes on byval arguments refers to the callee copy, not the
-    // original memory the caller passed in.
-    if (InitializesAttr.isValid() && !CB->isByValArgument(Idx))
+    if (InitializesAttr.isValid())
       Inits = InitializesAttr.getValueAsConstantRangeList();
 
     Value *CurArg = CB->getArgOperand(Idx);

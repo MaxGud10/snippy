@@ -9,8 +9,6 @@
 #ifndef LLVM_LIBC_COMMON_H
 #define LLVM_LIBC_COMMON_H
 
-#define __LLVM_LIBC__ 1
-
 #ifdef __cplusplus
 
 #undef __BEGIN_C_DECLS

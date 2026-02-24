@@ -39,8 +39,6 @@ public:
     DebianBullseye,
     DebianBookworm,
     DebianTrixie,
-    DebianForky,
-    DebianDuke,
     Exherbo,
     RHEL5,
     RHEL6,
@@ -130,7 +128,7 @@ public:
   bool IsOpenSUSE() const { return DistroVal == OpenSUSE; }
 
   bool IsDebian() const {
-    return DistroVal >= DebianLenny && DistroVal <= DebianDuke;
+    return DistroVal >= DebianLenny && DistroVal <= DebianTrixie;
   }
 
   bool IsUbuntu() const {

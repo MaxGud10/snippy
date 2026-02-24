@@ -59,15 +59,10 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     )
 endif()
 
-set(linked_libraries FortranDecimal)
-
 # function checks
 find_package(Backtrace)
 set(HAVE_BACKTRACE ${Backtrace_FOUND})
 set(BACKTRACE_HEADER ${Backtrace_HEADER})
-if(HAVE_BACKTRACE)
-  list(APPEND linked_libraries ${Backtrace_LIBRARY})
-endif()
 
 include(CheckCXXSymbolExists)
 include(CheckCXXSourceCompiles)
@@ -276,7 +271,7 @@ if (NOT DEFINED MSVC)
   add_flang_library(FortranRuntime
     ${sources}
     LINK_LIBS
-    ${linked_libraries}
+    FortranDecimal
 
     INSTALL_WITH_TOOLCHAIN
   )
@@ -284,7 +279,7 @@ else()
   add_flang_library(FortranRuntime
     ${sources}
     LINK_LIBS
-    ${linked_libraries}
+    FortranDecimal
   )
   set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded)
   add_flang_library(FortranRuntime.static ${sources}

@@ -1283,10 +1283,8 @@ void AccessAnalysis::processMemAccesses() {
 
     bool SetHasWrite = false;
 
-    // Map of (pointer to underlying objects, accessed address space) to last
-    // access encountered.
-    typedef DenseMap<std::pair<const Value *, unsigned>, MemAccessInfo>
-        UnderlyingObjToAccessMap;
+    // Map of pointers to last access encountered.
+    typedef DenseMap<const Value*, MemAccessInfo> UnderlyingObjToAccessMap;
     UnderlyingObjToAccessMap ObjToLastAccess;
 
     // Set of access to check after all writes have been processed.
@@ -1366,14 +1364,12 @@ void AccessAnalysis::processMemAccesses() {
                     UnderlyingObj->getType()->getPointerAddressSpace()))
               continue;
 
-            unsigned AccessAS = cast<PointerType>(Ptr->getType())->getAddressSpace();
             UnderlyingObjToAccessMap::iterator Prev =
-                ObjToLastAccess.find({UnderlyingObj,AccessAS 
-                 });
+                ObjToLastAccess.find(UnderlyingObj);
             if (Prev != ObjToLastAccess.end())
               DepCands.unionSets(Access, Prev->second);
 
-            ObjToLastAccess[{UnderlyingObj, AccessAS}] = Access;
+            ObjToLastAccess[UnderlyingObj] = Access;
             LLVM_DEBUG(dbgs() << "  " << *UnderlyingObj << "\n");
           }
         }

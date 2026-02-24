@@ -4336,11 +4336,11 @@ public:
   // Whether the callee should be ignored in CUDA/HIP/OpenMP host/device check.
   bool shouldIgnoreInHostDeviceCheck(FunctionDecl *Callee);
 
+private:
   /// Function or variable declarations to be checked for whether the deferred
   /// diagnostics should be emitted.
   llvm::SmallSetVector<Decl *, 4> DeclsToCheckForDeferredDiags;
 
-private:
   /// Map of current shadowing declarations to shadowed declarations. Warn if
   /// it looks like the user is trying to modify the shadowing declaration.
   llvm::DenseMap<const NamedDecl *, const NamedDecl *> ShadowingDecls;
@@ -10671,8 +10671,9 @@ public:
                            SourceLocation EndLoc);
   void ActOnForEachDeclStmt(DeclGroupPtrTy Decl);
 
-
-  // Unused, kept in Clang 20 for ABI stability.
+  /// DiagnoseDiscardedExprMarkedNodiscard - Given an expression that is
+  /// semantically a discarded-value expression, diagnose if any [[nodiscard]]
+  /// value has been discarded.
   void DiagnoseDiscardedExprMarkedNodiscard(const Expr *E);
 
   /// DiagnoseUnusedExprResult - If the statement passed in is an expression
@@ -11279,16 +11280,14 @@ public:
 
   /// The context in which we are checking a template parameter list.
   enum TemplateParamListContext {
-    // For this context, Class, Variable, TypeAlias, and non-pack Template
-    // Template Parameters are treated uniformly.
-    TPC_Other,
-
+    TPC_ClassTemplate,
+    TPC_VarTemplate,
     TPC_FunctionTemplate,
     TPC_ClassTemplateMember,
     TPC_FriendClassTemplate,
     TPC_FriendFunctionTemplate,
     TPC_FriendFunctionTemplateDefinition,
-    TPC_TemplateTemplateParameterPack,
+    TPC_TypeAliasTemplate
   };
 
   /// Checks the validity of a template parameter list, possibly
@@ -13492,8 +13491,8 @@ public:
   bool InstantiateClassTemplateSpecialization(
       SourceLocation PointOfInstantiation,
       ClassTemplateSpecializationDecl *ClassTemplateSpec,
-      TemplateSpecializationKind TSK, bool Complain,
-      bool PrimaryHasMatchedPackOnParmToNonPackOnArg);
+      TemplateSpecializationKind TSK, bool Complain = true,
+      bool PrimaryHasMatchedPackOnParmToNonPackOnArg = false);
 
   /// Instantiates the definitions of all of the member
   /// of the given class, which is an instantiation of a class template

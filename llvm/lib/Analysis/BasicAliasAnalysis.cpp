@@ -1245,11 +1245,8 @@ AliasResult BasicAAResult::aliasGEP(
   if (V1Size.isScalable() || V2Size.isScalable())
     return AliasResult::MayAlias;
 
-  // We need to know both access sizes for all the following heuristics. Don't
-  // try to reason about sizes larger than the index space.
-  unsigned BW = DecompGEP1.Offset.getBitWidth();
-  if (!V1Size.hasValue() || !V2Size.hasValue() ||
-      !isUIntN(BW, V1Size.getValue()) || !isUIntN(BW, V2Size.getValue()))
+  // We need to know both acess sizes for all the following heuristics.
+  if (!V1Size.hasValue() || !V2Size.hasValue())
     return AliasResult::MayAlias;
 
   APInt GCD;
@@ -1304,6 +1301,7 @@ AliasResult BasicAAResult::aliasGEP(
 
   // Compute ranges of potentially accessed bytes for both accesses. If the
   // interseciton is empty, there can be no overlap.
+  unsigned BW = OffsetRange.getBitWidth();
   ConstantRange Range1 = OffsetRange.add(
       ConstantRange(APInt(BW, 0), APInt(BW, V1Size.getValue())));
   ConstantRange Range2 =

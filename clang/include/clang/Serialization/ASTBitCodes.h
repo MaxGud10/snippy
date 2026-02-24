@@ -1522,13 +1522,13 @@ enum DeclCode {
   /// An ImplicitConceptSpecializationDecl record.
   DECL_IMPLICIT_CONCEPT_SPECIALIZATION,
 
-  // A decls specialization record.
+  // A decls specilization record.
   DECL_SPECIALIZATIONS,
 
-  // A decls specialization record.
+  // A decls specilization record.
   DECL_PARTIAL_SPECIALIZATIONS,
 
-  DECL_LAST = DECL_PARTIAL_SPECIALIZATIONS
+  DECL_LAST = DECL_IMPLICIT_CONCEPT_SPECIALIZATION
 };
 
 /// Record codes for each kind of statement or expression.

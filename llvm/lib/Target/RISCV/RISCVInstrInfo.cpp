@@ -3024,25 +3024,30 @@ static bool cannotInsertTailCall(const MachineBasicBlock &MBB) {
   return false;
 }
 
-static bool analyzeCandidate(outliner::Candidate &C) {
+static std::optional<MachineOutlinerConstructionID>
+analyzeCandidate(outliner::Candidate &C) {
   // If last instruction is return then we can rely on
   // the verification already performed in the getOutliningTypeImpl.
   if (C.back().isReturn()) {
     assert(!cannotInsertTailCall(*C.getMBB()) &&
            "The candidate who uses return instruction must be outlined "
            "using tail call");
-    return false;
+    return MachineOutlinerTailCall;
   }
 
-  // Filter out candidates where the X5 register (t0) can't be used to setup
-  // the function call.
-  const TargetRegisterInfo *TRI = C.getMF()->getSubtarget().getRegisterInfo();
-  if (std::any_of(C.begin(), C.end(), [TRI](const MachineInstr &MI) {
-        return isMIModifiesReg(MI, TRI, RISCV::X5);
-      }))
-    return true;
+  auto CandidateUsesX5 = [](outliner::Candidate &C) {
+    const TargetRegisterInfo *TRI = C.getMF()->getSubtarget().getRegisterInfo();
+    if (std::any_of(C.begin(), C.end(), [TRI](const MachineInstr &MI) {
+          return isMIModifiesReg(MI, TRI, RISCV::X5);
+        }))
+      return true;
+    return !C.isAvailableAcrossAndOutOfSeq(RISCV::X5, *TRI);
+  };
 
-  return !C.isAvailableAcrossAndOutOfSeq(RISCV::X5, *TRI);
+  if (!CandidateUsesX5(C))
+    return MachineOutlinerDefault;
+
+  return std::nullopt;
 }
 
 std::optional<std::unique_ptr<outliner::OutlinedFunction>>
@@ -3051,32 +3056,35 @@ RISCVInstrInfo::getOutliningCandidateInfo(
     std::vector<outliner::Candidate> &RepeatedSequenceLocs,
     unsigned MinRepeats) const {
 
-  // Analyze each candidate and erase the ones that are not viable.
-  llvm::erase_if(RepeatedSequenceLocs, analyzeCandidate);
+  // Each RepeatedSequenceLoc is identical.
+  outliner::Candidate &Candidate = RepeatedSequenceLocs[0];
+  auto CandidateInfo = analyzeCandidate(Candidate);
+  if (!CandidateInfo)
+    RepeatedSequenceLocs.clear();
 
   // If the sequence doesn't have enough candidates left, then we're done.
   if (RepeatedSequenceLocs.size() < MinRepeats)
     return std::nullopt;
 
-  // Each RepeatedSequenceLoc is identical.
-  outliner::Candidate &Candidate = RepeatedSequenceLocs[0];
   unsigned InstrSizeCExt =
       Candidate.getMF()->getSubtarget<RISCVSubtarget>().hasStdExtCOrZca() ? 2
                                                                           : 4;
   unsigned CallOverhead = 0, FrameOverhead = 0;
 
-  MachineOutlinerConstructionID MOCI = MachineOutlinerDefault;
-  if (Candidate.back().isReturn()) {
-    MOCI = MachineOutlinerTailCall;
-    // tail call = auipc + jalr in the worst case without linker relaxation.
-    CallOverhead = 4 + InstrSizeCExt;
-    // Using tail call we move ret instruction from caller to callee.
-    FrameOverhead = 0;
-  } else {
+  MachineOutlinerConstructionID MOCI = CandidateInfo.value();
+  switch (MOCI) {
+  case MachineOutlinerDefault:
     // call t0, function = 8 bytes.
     CallOverhead = 8;
     // jr t0 = 4 bytes, 2 bytes if compressed instructions are enabled.
     FrameOverhead = InstrSizeCExt;
+    break;
+  case MachineOutlinerTailCall:
+    // tail call = auipc + jalr in the worst case without linker relaxation.
+    CallOverhead = 4 + InstrSizeCExt;
+    // Using tail call we move ret instruction from caller to callee.
+    FrameOverhead = 0;
+    break;
   }
 
   for (auto &C : RepeatedSequenceLocs)

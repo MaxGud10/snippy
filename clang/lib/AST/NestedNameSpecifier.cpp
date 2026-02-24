@@ -283,16 +283,13 @@ void NestedNameSpecifier::print(raw_ostream &OS, const PrintingPolicy &Policy,
   case TypeSpec: {
     const auto *Record =
             dyn_cast_or_null<ClassTemplateSpecializationDecl>(getAsRecordDecl());
-    const TemplateParameterList *TPL = nullptr;
-    if (Record) {
-      TPL = Record->getSpecializedTemplate()->getTemplateParameters();
-      if (ResolveTemplateArguments) {
+    if (ResolveTemplateArguments && Record) {
         // Print the type trait with resolved template parameters.
         Record->printName(OS, Policy);
-        printTemplateArgumentList(OS, Record->getTemplateArgs().asArray(),
-                                  Policy, TPL);
+        printTemplateArgumentList(
+            OS, Record->getTemplateArgs().asArray(), Policy,
+            Record->getSpecializedTemplate()->getTemplateParameters());
         break;
-      }
     }
     const Type *T = getAsType();
 
@@ -316,8 +313,8 @@ void NestedNameSpecifier::print(raw_ostream &OS, const PrintingPolicy &Policy,
                                         TemplateName::Qualified::None);
 
       // Print the template argument list.
-      printTemplateArgumentList(OS, SpecType->template_arguments(), InnerPolicy,
-                                TPL);
+      printTemplateArgumentList(OS, SpecType->template_arguments(),
+                                InnerPolicy);
     } else if (const auto *DepSpecType =
                    dyn_cast<DependentTemplateSpecializationType>(T)) {
       // Print the template name without its corresponding
@@ -325,7 +322,7 @@ void NestedNameSpecifier::print(raw_ostream &OS, const PrintingPolicy &Policy,
       OS << DepSpecType->getIdentifier()->getName();
       // Print the template argument list.
       printTemplateArgumentList(OS, DepSpecType->template_arguments(),
-                                InnerPolicy, TPL);
+                                InnerPolicy);
     } else {
       // Print the type normally
       QualType(T, 0).print(OS, InnerPolicy);

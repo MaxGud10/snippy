@@ -12,6 +12,7 @@ add_flang_unittest(FlangFrontendTests
 
 target_link_libraries(FlangFrontendTests
   PRIVATE
+  clangBasic
   flangFrontend
   flangFrontendTool
   FortranLower
@@ -19,11 +20,6 @@ target_link_libraries(FlangFrontendTests
   FortranSemantics
   FortranCommon
   FortranEvaluate
-)
-
-clang_target_link_libraries(FlangFrontendTests
-  PRIVATE
-  clangBasic
 )
 
 mlir_target_link_libraries(FlangFrontendTests

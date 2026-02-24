@@ -1826,8 +1826,7 @@ QualType Sema::BuildPointerType(QualType T,
   if (checkQualifiedFunction(*this, T, Loc, QFK_Pointer))
     return QualType();
 
-  if (T->isObjCObjectType())
-    return Context.getObjCObjectPointerType(T);
+  assert(!T->isObjCObjectType() && "Should build ObjCObjectPointerType");
 
   // In ARC, it is forbidden to build pointers to unqualified pointers.
   if (getLangOpts().ObjCAutoRefCount)
@@ -8492,8 +8491,7 @@ static void HandleRISCVRVVVectorBitsTypeAttr(QualType &CurType,
     return;
   }
 
-  auto VScale =
-      S.Context.getTargetInfo().getVScaleRange(S.getLangOpts(), false);
+  auto VScale = S.Context.getTargetInfo().getVScaleRange(S.getLangOpts());
   if (!VScale || !VScale->first || VScale->first != VScale->second) {
     S.Diag(Attr.getLoc(), diag::err_attribute_riscv_rvv_bits_unsupported)
         << Attr;
@@ -9399,8 +9397,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
         runWithSufficientStackSpace(Loc, [&] {
           Diagnosed = InstantiateClassTemplateSpecialization(
               Loc, ClassTemplateSpec, TSK_ImplicitInstantiation,
-              /*Complain=*/Diagnoser,
-              ClassTemplateSpec->hasMatchedPackOnParmToNonPackOnArg());
+              /*Complain=*/Diagnoser);
         });
         Instantiated = true;
       }
@@ -9810,7 +9807,8 @@ QualType Sema::BuiltinAddPointer(QualType BaseType, SourceLocation Loc) {
 }
 
 QualType Sema::BuiltinRemovePointer(QualType BaseType, SourceLocation Loc) {
-  if (!BaseType->isAnyPointerType())
+  // We don't want block pointers or ObjectiveC's id type.
+  if (!BaseType->isAnyPointerType() || BaseType->isObjCIdType())
     return BaseType;
 
   return BaseType->getPointeeType();

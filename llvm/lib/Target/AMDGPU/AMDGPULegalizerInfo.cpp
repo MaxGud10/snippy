@@ -2426,8 +2426,11 @@ bool AMDGPULegalizerInfo::legalizeAddrSpaceCast(
     return true;
   }
 
-  // Invalid casts are poison.
-  // TODO: Should return poison
+  DiagnosticInfoUnsupported InvalidAddrSpaceCast(
+      MF.getFunction(), "invalid addrspacecast", B.getDebugLoc());
+
+  LLVMContext &Ctx = MF.getFunction().getContext();
+  Ctx.diagnose(InvalidAddrSpaceCast);
   B.buildUndef(Dst);
   MI.eraseFromParent();
   return true;

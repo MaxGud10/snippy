@@ -1320,10 +1320,7 @@ MCRegister PPCAsmParser::matchRegisterName(int64_t &IntVal) {
   if (!getParser().getTok().is(AsmToken::Identifier))
     return MCRegister();
 
-  // MatchRegisterName() expects lower-case registers, but we want to support
-  // case-insensitive spelling.
-  std::string NameBuf = getParser().getTok().getString().lower();
-  StringRef Name(NameBuf);
+  StringRef Name = getParser().getTok().getString();
   MCRegister RegNo = MatchRegisterName(Name);
   if (!RegNo)
     return RegNo;
@@ -1332,15 +1329,15 @@ MCRegister PPCAsmParser::matchRegisterName(int64_t &IntVal) {
 
   // MatchRegisterName doesn't seem to have special handling for 64bit vs 32bit
   // register types.
-  if (Name == "lr") {
+  if (Name.equals_insensitive("lr")) {
     RegNo = isPPC64() ? PPC::LR8 : PPC::LR;
     IntVal = 8;
-  } else if (Name == "ctr") {
+  } else if (Name.equals_insensitive("ctr")) {
     RegNo = isPPC64() ? PPC::CTR8 : PPC::CTR;
     IntVal = 9;
-  } else if (Name == "vrsave")
+  } else if (Name.equals_insensitive("vrsave"))
     IntVal = 256;
-  else if (Name.starts_with("r"))
+  else if (Name.starts_with_insensitive("r"))
     RegNo = isPPC64() ? XRegs[IntVal] : RRegs[IntVal];
 
   getParser().Lex();

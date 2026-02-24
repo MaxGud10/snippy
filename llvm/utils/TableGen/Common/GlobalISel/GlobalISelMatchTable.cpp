@@ -227,10 +227,24 @@ MatchTableRecord MatchTable::NamedValue(unsigned NumBytes,
                           MatchTableRecord::MTRF_CommaFollows);
 }
 
+MatchTableRecord MatchTable::NamedValue(unsigned NumBytes, StringRef NamedValue,
+                                        int64_t RawValue) {
+  return MatchTableRecord(std::nullopt, NamedValue, NumBytes,
+                          MatchTableRecord::MTRF_CommaFollows, RawValue);
+}
+
 MatchTableRecord MatchTable::NamedValue(unsigned NumBytes, StringRef Namespace,
                                         StringRef NamedValue) {
   return MatchTableRecord(std::nullopt, (Namespace + "::" + NamedValue).str(),
                           NumBytes, MatchTableRecord::MTRF_CommaFollows);
+}
+
+MatchTableRecord MatchTable::NamedValue(unsigned NumBytes, StringRef Namespace,
+                                        StringRef NamedValue,
+                                        int64_t RawValue) {
+  return MatchTableRecord(std::nullopt, (Namespace + "::" + NamedValue).str(),
+                          NumBytes, MatchTableRecord::MTRF_CommaFollows,
+                          RawValue);
 }
 
 MatchTableRecord MatchTable::IntValue(unsigned NumBytes, int64_t IntValue) {
@@ -637,8 +651,8 @@ void SwitchMatcher::emit(MatchTable &Table) {
                 [&Table]() { return Table.allocateLabelID(); });
   const unsigned Default = Table.allocateLabelID();
 
-  const int64_t LowerBound = Values.begin()->RawValue;
-  const int64_t UpperBound = Values.rbegin()->RawValue + 1;
+  const int64_t LowerBound = Values.begin()->getRawValue();
+  const int64_t UpperBound = Values.rbegin()->getRawValue() + 1;
 
   emitPredicateSpecificOpcodes(*Condition, Table);
 
@@ -650,11 +664,10 @@ void SwitchMatcher::emit(MatchTable &Table) {
   auto VI = Values.begin();
   for (unsigned I = 0, E = Values.size(); I < E; ++I) {
     auto V = *VI++;
-    while (J++ < V.RawValue)
+    while (J++ < V.getRawValue())
       Table << MatchTable::IntValue(4, 0);
-    V.Record.turnIntoComment();
-    Table << MatchTable::LineBreak << V.Record
-          << MatchTable::JumpTarget(LabelIDs[I]);
+    V.turnIntoComment();
+    Table << MatchTable::LineBreak << V << MatchTable::JumpTarget(LabelIDs[I]);
   }
   Table << MatchTable::LineBreak;
 
@@ -1132,11 +1145,11 @@ void SameOperandMatcher::emitPredicateOpcodes(MatchTable &Table,
 
 std::map<LLTCodeGen, unsigned> LLTOperandMatcher::TypeIDValues;
 
-RecordAndValue LLTOperandMatcher::getValue() const {
+MatchTableRecord LLTOperandMatcher::getValue() const {
   const auto VI = TypeIDValues.find(Ty);
   if (VI == TypeIDValues.end())
     return MatchTable::NamedValue(1, getTy().getCxxEnumValue());
-  return {MatchTable::NamedValue(1, getTy().getCxxEnumValue()), VI->second};
+  return MatchTable::NamedValue(1, getTy().getCxxEnumValue(), VI->second);
 }
 
 bool LLTOperandMatcher::hasValue() const {
@@ -1154,8 +1167,7 @@ void LLTOperandMatcher::emitPredicateOpcodes(MatchTable &Table,
           << MatchTable::ULEB128Value(InsnVarID);
   }
   Table << MatchTable::Comment("Op") << MatchTable::ULEB128Value(OpIdx)
-        << MatchTable::Comment("Type") << getValue().Record
-        << MatchTable::LineBreak;
+        << MatchTable::Comment("Type") << getValue() << MatchTable::LineBreak;
 }
 
 //===- PointerToAnyOperandMatcher -----------------------------------------===//
@@ -1399,12 +1411,12 @@ Error OperandMatcher::addTypeCheckPredicate(const TypeSetByHwMode &VTy,
 DenseMap<const CodeGenInstruction *, unsigned>
     InstructionOpcodeMatcher::OpcodeValues;
 
-RecordAndValue
+MatchTableRecord
 InstructionOpcodeMatcher::getInstValue(const CodeGenInstruction *I) const {
   const auto VI = OpcodeValues.find(I);
   if (VI != OpcodeValues.end())
-    return {MatchTable::NamedValue(2, I->Namespace, I->TheDef->getName()),
-            VI->second};
+    return MatchTable::NamedValue(2, I->Namespace, I->TheDef->getName(),
+                                  VI->second);
   return MatchTable::NamedValue(2, I->Namespace, I->TheDef->getName());
 }
 
@@ -1416,14 +1428,14 @@ void InstructionOpcodeMatcher::initOpcodeValuesMap(
     OpcodeValues[I] = Target.getInstrIntValue(I->TheDef);
 }
 
-RecordAndValue InstructionOpcodeMatcher::getValue() const {
+MatchTableRecord InstructionOpcodeMatcher::getValue() const {
   assert(Insts.size() == 1);
 
   const CodeGenInstruction *I = Insts[0];
   const auto VI = OpcodeValues.find(I);
   if (VI != OpcodeValues.end())
-    return {MatchTable::NamedValue(2, I->Namespace, I->TheDef->getName()),
-            VI->second};
+    return MatchTable::NamedValue(2, I->Namespace, I->TheDef->getName(),
+                                  VI->second);
   return MatchTable::NamedValue(2, I->Namespace, I->TheDef->getName());
 }
 
@@ -1435,7 +1447,7 @@ void InstructionOpcodeMatcher::emitPredicateOpcodes(MatchTable &Table,
         << MatchTable::ULEB128Value(InsnVarID);
 
   for (const CodeGenInstruction *I : Insts)
-    Table << getInstValue(I).Record;
+    Table << getInstValue(I);
   Table << MatchTable::LineBreak;
 }
 

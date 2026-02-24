@@ -11,7 +11,6 @@ endif()
 
 add_llvm_component_library(LLVMOrcTargetProcess
   ExecutorSharedMemoryMapperService.cpp
-  DefaultHostBootstrapValues.cpp
   JITLoaderGDB.cpp
   JITLoaderPerf.cpp
   JITLoaderVTune.cpp
@@ -21,7 +20,6 @@ add_llvm_component_library(LLVMOrcTargetProcess
   SimpleExecutorMemoryManager.cpp
   SimpleRemoteEPCServer.cpp
   TargetExecutionUtils.cpp
-  UnwindInfoManager.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/ExecutionEngine/Orc

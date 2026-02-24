@@ -662,19 +662,12 @@ void LiveVariables::dumpExprLiveness(const SourceManager &M) {
 }
 
 void LiveVariablesImpl::dumpExprLiveness(const SourceManager &M) {
-  const ASTContext &Ctx = analysisContext.getASTContext();
-  auto ByIDs = [&Ctx](const Expr *L, const Expr *R) {
-    return L->getID(Ctx) < R->getID(Ctx);
-  };
-
   // Don't iterate over blockEndsToLiveness directly because it's not sorted.
   for (const CFGBlock *B : *analysisContext.getCFG()) {
+
     llvm::errs() << "\n[ B" << B->getBlockID()
                  << " (live expressions at block exit) ]\n";
-    std::vector<const Expr *> LiveExprs;
-    llvm::append_range(LiveExprs, blocksEndToLiveness[B].liveExprs);
-    llvm::sort(LiveExprs, ByIDs);
-    for (const Expr *E : LiveExprs) {
+    for (const Expr *E : blocksEndToLiveness[B].liveExprs) {
       llvm::errs() << "\n";
       E->dump();
     }

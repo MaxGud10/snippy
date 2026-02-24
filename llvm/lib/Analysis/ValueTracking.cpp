@@ -1445,22 +1445,7 @@ static void computeKnownBitsFromOperator(const Operator *I,
     computeKnownBits(I->getOperand(0), Known, Depth + 1, Q);
     // Accumulate the constant indices in a separate variable
     // to minimize the number of calls to computeForAddSub.
-    unsigned IndexWidth = Q.DL.getIndexTypeSizeInBits(I->getType());
-    APInt AccConstIndices(IndexWidth, 0);
-
-    auto AddIndexToKnown = [&](KnownBits IndexBits) {
-      if (IndexWidth == BitWidth) {
-        // Note that inbounds does *not* guarantee nsw for the addition, as only
-        // the offset is signed, while the base address is unsigned.
-        Known = KnownBits::add(Known, IndexBits);
-      } else {
-        // If the index width is smaller than the pointer width, only add the
-        // value to the low bits.
-        assert(IndexWidth < BitWidth &&
-               "Index width can't be larger than pointer width");
-        Known.insertBits(KnownBits::add(Known.trunc(IndexWidth), IndexBits), 0);
-      }
-    };
+    APInt AccConstIndices(BitWidth, 0, /*IsSigned*/ true);
 
     gep_type_iterator GTI = gep_type_begin(I);
     for (unsigned i = 1, e = I->getNumOperands(); i != e; ++i, ++GTI) {
@@ -1498,34 +1483,43 @@ static void computeKnownBitsFromOperator(const Operator *I,
         break;
       }
 
-      TypeSize Stride = GTI.getSequentialElementStride(Q.DL);
-      uint64_t StrideInBytes = Stride.getKnownMinValue();
-      if (!Stride.isScalable()) {
-        // Fast path for constant offset.
-        if (auto *CI = dyn_cast<ConstantInt>(Index)) {
-          AccConstIndices +=
-              CI->getValue().sextOrTrunc(IndexWidth) * StrideInBytes;
-          continue;
-        }
-      }
-
-      KnownBits IndexBits =
-          computeKnownBits(Index, Depth + 1, Q).sextOrTrunc(IndexWidth);
-      KnownBits ScalingFactor(IndexWidth);
+      unsigned IndexBitWidth = Index->getType()->getScalarSizeInBits();
+      KnownBits IndexBits(IndexBitWidth);
+      computeKnownBits(Index, IndexBits, Depth + 1, Q);
+      TypeSize IndexTypeSize = GTI.getSequentialElementStride(Q.DL);
+      uint64_t TypeSizeInBytes = IndexTypeSize.getKnownMinValue();
+      KnownBits ScalingFactor(IndexBitWidth);
       // Multiply by current sizeof type.
       // &A[i] == A + i * sizeof(*A[i]).
-      if (Stride.isScalable()) {
+      if (IndexTypeSize.isScalable()) {
         // For scalable types the only thing we know about sizeof is
         // that this is a multiple of the minimum size.
-        ScalingFactor.Zero.setLowBits(llvm::countr_zero(StrideInBytes));
+        ScalingFactor.Zero.setLowBits(llvm::countr_zero(TypeSizeInBytes));
+      } else if (IndexBits.isConstant()) {
+        APInt IndexConst = IndexBits.getConstant();
+        APInt ScalingFactor(IndexBitWidth, TypeSizeInBytes);
+        IndexConst *= ScalingFactor;
+        AccConstIndices += IndexConst.sextOrTrunc(BitWidth);
+        continue;
       } else {
         ScalingFactor =
-            KnownBits::makeConstant(APInt(IndexWidth, StrideInBytes));
+            KnownBits::makeConstant(APInt(IndexBitWidth, TypeSizeInBytes));
       }
-      AddIndexToKnown(KnownBits::mul(IndexBits, ScalingFactor));
+      IndexBits = KnownBits::mul(IndexBits, ScalingFactor);
+
+      // If the offsets have a different width from the pointer, according
+      // to the language reference we need to sign-extend or truncate them
+      // to the width of the pointer.
+      IndexBits = IndexBits.sextOrTrunc(BitWidth);
+
+      // Note that inbounds does *not* guarantee nsw for the addition, as only
+      // the offset is signed, while the base address is unsigned.
+      Known = KnownBits::add(Known, IndexBits);
     }
-    if (!Known.isUnknown() && !AccConstIndices.isZero())
-      AddIndexToKnown(KnownBits::makeConstant(AccConstIndices));
+    if (!Known.isUnknown() && !AccConstIndices.isZero()) {
+      KnownBits Index = KnownBits::makeConstant(AccConstIndices);
+      Known = KnownBits::add(Known, Index);
+    }
     break;
   }
   case Instruction::PHI: {
@@ -6135,14 +6129,13 @@ void computeKnownFPClass(const Value *V, const APInt &DemandedElts,
     else if (Bits.isNegative())
       Known.signBitMustBeOne();
 
-    if (Ty->isIEEELikeFPTy()) {
+    if (Ty->isIEEE()) {
       // IEEE floats are NaN when all bits of the exponent plus at least one of
       // the fraction bits are 1. This means:
       //   - If we assume unknown bits are 0 and the value is NaN, it will
       //     always be NaN
       //   - If we assume unknown bits are 1 and the value is not NaN, it can
       //     never be NaN
-      // Note: They do not hold for x86_fp80 format.
       if (APFloat(Ty->getFltSemantics(), Bits.One).isNaN())
         Known.KnownFPClasses = fcNan;
       else if (!APFloat(Ty->getFltSemantics(), ~Bits.Zero).isNaN())
@@ -7777,8 +7770,6 @@ static bool isGuaranteedNotToBeUndefOrPoison(
       unsigned Num = PN->getNumIncomingValues();
       bool IsWellDefined = true;
       for (unsigned i = 0; i < Num; ++i) {
-        if (PN == PN->getIncomingValue(i))
-          continue;
         auto *TI = PN->getIncomingBlock(i)->getTerminator();
         if (!isGuaranteedNotToBeUndefOrPoison(PN->getIncomingValue(i), AC, TI,
                                               DT, Depth + 1, Kind)) {

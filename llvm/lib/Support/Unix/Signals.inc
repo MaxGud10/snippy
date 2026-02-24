@@ -468,8 +468,7 @@ void llvm::sys::AddSignalHandler(sys::SignalHandlerCallback FnPtr,
 
 #if ENABLE_BACKTRACES && defined(HAVE_BACKTRACE) &&                            \
     (defined(__linux__) || defined(__FreeBSD__) ||                             \
-     defined(__FreeBSD_kernel__) || defined(__NetBSD__) ||                     \
-     defined(__OpenBSD__) || defined(__DragonFly__))
+     defined(__FreeBSD_kernel__) || defined(__NetBSD__))
 struct DlIteratePhdrData {
   void **StackTrace;
   int depth;
