@@ -26,7 +26,7 @@ template class GenResultT<ObjectMetadata>;
 
 SnippyModule::SnippyModule(LLVMState &State, StringRef Name)
     : Module(Name, State.getCtx()), State(State), Context([&]() {
-        setTargetTriple(State.getSubtargetInfo().getTargetTriple().getTriple());
+        setTargetTriple(State.getSubtargetInfo().getTargetTriple());
         auto &LLVMTM = State.getTargetMachine();
         // Previously, AsmPrinter was created using Context from MMI
         // MMI is captured by PM, so in order to avoid potential invalid ref,

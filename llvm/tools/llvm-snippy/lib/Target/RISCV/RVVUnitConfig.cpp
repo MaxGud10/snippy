@@ -338,21 +338,21 @@ static auto convertLMULRepresentation(unsigned LMULInternal) {
   assert(LMULInternal < static_cast<unsigned>(LMULTypes::ItemsNum));
   switch (static_cast<LMULTypes>(LMULInternal)) {
   case LMULTypes::M1:
-    return RISCVII::VLMUL::LMUL_1;
+    return RISCVVType::VLMUL::LMUL_1;
   case LMULTypes::M2:
-    return RISCVII::VLMUL::LMUL_2;
+    return RISCVVType::VLMUL::LMUL_2;
   case LMULTypes::M4:
-    return RISCVII::VLMUL::LMUL_4;
+    return RISCVVType::VLMUL::LMUL_4;
   case LMULTypes::M8:
-    return RISCVII::VLMUL::LMUL_8;
+    return RISCVVType::VLMUL::LMUL_8;
   case LMULTypes::MReserved:
-    return RISCVII::VLMUL::LMUL_RESERVED;
+    return RISCVVType::VLMUL::LMUL_RESERVED;
   case LMULTypes::MF2:
-    return RISCVII::VLMUL::LMUL_F2;
+    return RISCVVType::VLMUL::LMUL_F2;
   case LMULTypes::MF4:
-    return RISCVII::VLMUL::LMUL_F4;
+    return RISCVVType::VLMUL::LMUL_F4;
   case LMULTypes::MF8:
-    return RISCVII::VLMUL::LMUL_F8;
+    return RISCVVType::VLMUL::LMUL_F8;
   default:
     llvm_unreachable("incorrect LMULInternal representation");
   }
@@ -841,14 +841,22 @@ template <> struct yaml::MappingTraits<VectorUnitRules> {
 namespace snippy {
 
 std::unique_ptr<RVVConfigInterface> createRVVConfig() {
+#if 0
+  initRISCVTargetParserOptions();
+  if (AllowReservedSEW == cl::BOU_UNSET)
+    // Snippy allows using reserved SEW (128 - 1024) encodings and RISC-V LLVM
+    // backend should be able to encode it.
+    AllowReservedSEW = cl::BOU_TRUE;
+#endif
+  AllowReservedSEW = true;
   return std::make_unique<RVVConfig>();
 }
 
-inline static bool isReservedValues(unsigned SEW, RISCVII::VLMUL LMUL) {
-  return LMUL == RISCVII::VLMUL::LMUL_RESERVED || !isLegalSEW(SEW);
+inline static bool isReservedValues(unsigned SEW, RISCVVType::VLMUL LMUL) {
+  return LMUL == RISCVVType::VLMUL::LMUL_RESERVED || !isLegalSEW(SEW);
 }
 
-unsigned computeVLMax(unsigned VLEN, unsigned SEW, RISCVII::VLMUL LMUL) {
+unsigned computeVLMax(unsigned VLEN, unsigned SEW, RISCVVType::VLMUL LMUL) {
   if (isReservedValues(SEW, LMUL))
     return 0;
   assert(canBeEncoded(SEW));
@@ -863,7 +871,7 @@ unsigned computeVLMax(unsigned VLEN, unsigned SEW, RISCVII::VLMUL LMUL) {
 }
 
 std::pair<unsigned, bool> computeDecodedEMUL(unsigned SEW, unsigned EEW,
-                                             RISCVII::VLMUL LMUL) {
+                                             RISCVVType::VLMUL LMUL) {
   if (isReservedValues(SEW, LMUL) || !isLegalSEW(SEW) || !isLegalSEW(EEW)) {
     // Calculating EMUL doesn't make sense for illegal values of SEW or LMUL, so
     // just return {1, 0}
@@ -878,12 +886,12 @@ std::pair<unsigned, bool> computeDecodedEMUL(unsigned SEW, unsigned EEW,
   return {Dividend / Divisor, /* fractional */ false};
 }
 
-bool isValidEMUL(unsigned SEW, unsigned EEW, RISCVII::VLMUL LMUL) {
+bool isValidEMUL(unsigned SEW, unsigned EEW, RISCVVType::VLMUL LMUL) {
   auto [EMUL, IsFractional] = computeDecodedEMUL(SEW, EEW, LMUL);
   return RISCVVType::isValidLMUL(EMUL, IsFractional);
 }
 
-RISCVII::VLMUL computeEMUL(unsigned SEW, unsigned EEW, RISCVII::VLMUL LMUL) {
+RISCVVType::VLMUL computeEMUL(unsigned SEW, unsigned EEW, RISCVVType::VLMUL LMUL) {
   auto [EMUL, IsFractional] = computeDecodedEMUL(SEW, EEW, LMUL);
   assert(RISCVVType::isValidLMUL(EMUL, IsFractional));
   return RISCVVType::encodeLMUL(EMUL, IsFractional);
@@ -917,7 +925,7 @@ static void printVType(unsigned VType, raw_ostream &OS) {
   bool IsReserved = false;
   bool Fractional = false;
 
-  if (RISCVVType::getVLMUL(VType) == RISCVII::VLMUL::LMUL_RESERVED)
+  if (RISCVVType::getVLMUL(VType) == RISCVVType::VLMUL::LMUL_RESERVED)
     IsReserved = true;
   else
     std::tie(LMul, Fractional) =

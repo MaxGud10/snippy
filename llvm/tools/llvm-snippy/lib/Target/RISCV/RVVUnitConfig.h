@@ -55,10 +55,10 @@ class Config;
 std::unique_ptr<RVVConfigInterface> createRVVConfig();
 
 // Compute EMUL = EEW / SEW * LMUL
-RISCVII::VLMUL computeEMUL(unsigned SEW, unsigned EEW, RISCVII::VLMUL LMUL);
+RISCVVType::VLMUL computeEMUL(unsigned SEW, unsigned EEW, RISCVVType::VLMUL LMUL);
 std::pair<unsigned, bool> computeDecodedEMUL(unsigned SEW, unsigned EEW,
-                                             RISCVII::VLMUL LMUL);
-bool isValidEMUL(unsigned SEW, unsigned EEW, RISCVII::VLMUL LMUL);
+                                             RISCVVType::VLMUL LMUL);
+bool isValidEMUL(unsigned SEW, unsigned EEW, RISCVVType::VLMUL LMUL);
 
 inline static bool canBeEncoded(unsigned SEW) {
   // This wrapper clarify the meaning of the function RISCVVType::isValidSEW.
@@ -72,7 +72,7 @@ inline static bool canBeEncoded(unsigned SEW) {
 // LMUL - lmul for which we want to compute VLMAX
 // If function returns zero - it means that such combination is not valid
 // TODO: consider replacing unsigned `SEW` parameter with typed enum
-unsigned computeVLMax(unsigned VLEN, unsigned SEW, RISCVII::VLMUL LMUL);
+unsigned computeVLMax(unsigned VLEN, unsigned SEW, RISCVVType::VLMUL LMUL);
 
 enum RVVConstants { kMaxVLForVSETIVLI = 31u, kMaxLMUL = 8u };
 
@@ -94,7 +94,7 @@ struct RVVConfiguration final {
   unsigned static getMaxLMUL() { return RVVConstants::kMaxLMUL; }
 
   bool IsLegal = true;
-  RISCVII::VLMUL LMUL = RISCVII::VLMUL::LMUL_1;
+  RISCVVType::VLMUL LMUL = RISCVVType::VLMUL::LMUL_1;
   VSEW SEW = VSEW::SEW64;
   bool MaskAgnostic = false;
   bool TailAgnostic = false;
@@ -334,9 +334,9 @@ public:
   // Support configuration can be temporarily used for support sequences, like
   // writing to a register. After that the previous configuration is restored.
   constexpr static RVVConfiguration SupportCfgSew64{
-      true /*IsLegal*/, RISCVII::VLMUL::LMUL_1, RVVConfiguration::VSEW::SEW64};
+      true /*IsLegal*/, RISCVVType::VLMUL::LMUL_1, RVVConfiguration::VSEW::SEW64};
   constexpr static RVVConfiguration SupportCfgSew32{
-      true /*IsLegal*/, RISCVII::VLMUL::LMUL_1, RVVConfiguration::VSEW::SEW32};
+      true /*IsLegal*/, RISCVVType::VLMUL::LMUL_1, RVVConfiguration::VSEW::SEW32};
 };
 
 class BaseConfigurationInfo final {

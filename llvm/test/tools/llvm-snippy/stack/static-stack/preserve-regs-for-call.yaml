@@ -33,4 +33,4 @@ histogram:
 #                     $x7 = ADDIW $x7, -768
 #                     $x31 = LD $x7, 0
 
-# CHECK: {{ADDI.*[[:space:]].*SD.*[[:space:]].*AUIPC.*[[:space:]].*ADDI.*[[:space:]].*PseudoCALLIndirect.*[[:space:]].*LUI.*[[:space:]].*ADDIW.*[[:space:]].*LD}}
+# CHECK: {{ADDI.*[[:space:]].*SD.*[[:space:]].*AUIPC.*[[:space:]].*ADDI.*[[:space:]].*PseudoCALLIndirect.*[[:space:]].*LUI.*[[:space:]].*ADDI.*[[:space:]].*LD}}
