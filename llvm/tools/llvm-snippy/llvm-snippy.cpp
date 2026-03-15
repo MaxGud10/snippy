@@ -174,6 +174,7 @@ static SelectedTargetInfo getSelectedTargetInfo(const ProgramOptions &Opts) {
   TargetInfo.Triple = Opts.MTargetTriple;
   TargetInfo.CPU = Opts.CpuName;
   TargetInfo.Features = Opts.MAttr;
+  TargetInfo.ABI = Opts.ABI;
   if (!Opts.MTargetTripleSpecified && !Opts.MArchSpecified) {
     TargetInfo.Triple = sys::getProcessTriple();
     if (!Opts.CpuNameSpecified)

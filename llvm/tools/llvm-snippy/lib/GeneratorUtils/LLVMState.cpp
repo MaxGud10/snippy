@@ -162,7 +162,8 @@ Expected<LLVMState> LLVMState::create(const SelectedTargetInfo &TargetInfo) {
   // cannot do by itself on some targets.
   // E.G.: RISCV AsmPrinter cannot emit JAL directly.
   TargetFeatures += ",+relax";
-  const TargetOptions Options;
+  TargetOptions Options;
+  Options.MCOptions.ABIName = TargetInfo.ABI;
   auto TM = std::unique_ptr<TargetMachine>(static_cast<TargetMachine *>(
       Tgt->createTargetMachine(TheTriple, TargetInfo.CPU, TargetFeatures,
                                Options, Reloc::Model::Static)));

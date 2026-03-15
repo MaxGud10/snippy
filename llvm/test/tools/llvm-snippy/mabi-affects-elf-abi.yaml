@@ -1,0 +1,25 @@
+# RUN: llvm-snippy %s -o %t.elf
+# RUN: llvm-readelf -h %t.elf | FileCheck %s
+
+options:
+  march: rv64gc
+  mtriple: riscv64-linux-gnu
+  mabi: lp64d
+
+sections:
+  - name: text
+    VMA: 0x1000
+    LMA: 0x1000
+    SIZE: 0x1000
+    ACCESS: rx
+  - name: data
+    VMA: 0x2000
+    LMA: 0x2000
+    SIZE: 0x1000
+    ACCESS: rw
+
+histogram:
+  - [ADD, 1]
+
+# CHECK: Machine:                           RISC-V
+# CHECK: Flags:                             0x5, RVC, double-float ABI
